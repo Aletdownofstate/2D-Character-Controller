@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -40,6 +42,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 facingDirection = Vector2.right;
     private float coyoteTimeCounter;
     private float jumpBufferCounter;
+    private bool hasDoubleJumped = false;
 
     private void OnEnable()
     {
@@ -84,7 +87,11 @@ public class PlayerController : MonoBehaviour
 
         isGrounded = IsGrounded();
 
-        if (isGrounded) currentMovementSpeed = isRunning ? runSpeed : moveSpeed;
+        if (isGrounded)
+        {
+            currentMovementSpeed = isRunning ? runSpeed : moveSpeed;
+            hasDoubleJumped = false;
+        }
 
         CoyoteTime();
 
@@ -153,6 +160,12 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             coyoteTimeCounter = 0f;
+            hasDoubleJumped = false;
+        }
+        else if(canDoubleJump && !hasDoubleJumped)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            hasDoubleJumped = true;
         }
     }
 
@@ -171,10 +184,13 @@ public class PlayerController : MonoBehaviour
 
     private void JumpBuffer()
     {
-        if (jumpBufferCounter > 0f && coyoteTimeCounter > 0f)
+        if (jumpBufferCounter > 0f)
         {
-            Jump();
-            jumpBufferCounter = 0f;
+            if (coyoteTimeCounter > 0f || (canDoubleJump && !hasDoubleJumped))
+            {
+                Jump();
+                jumpBufferCounter = 0f;
+            }
         }
     }
 
